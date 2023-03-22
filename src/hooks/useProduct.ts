@@ -40,11 +40,6 @@ export function useProductList() {
 
       return { result, totalPages, totalElements, nextCursor };
     },
-    getNextPageParam: ({ nextCursor, totalElements, totalPages }) => ({
-      nextCursor,
-      totalElements,
-      totalPages,
-    }),
   });
 }
 
@@ -52,14 +47,15 @@ interface useProductPaginationProps {
   keyword?: string | null;
   type?: string;
   size?: number;
+  page?: number;
 }
 
 export function useProductPagination({
   keyword = "",
   type = "active",
   size = 5,
+  page = 0,
 }: useProductPaginationProps = {}) {
-  let page = 0;
   let url = "/product/showall-active";
   if (type === "archived") {
     url = "/product/showall-archived";
@@ -72,8 +68,9 @@ export function useProductPagination({
     }
   }
   const { getString, lang } = useLanguage();
+
   return useInfiniteQuery({
-    queryKey: ["products", page, keyword, type],
+    queryKey: ["products", keyword, type],
     queryFn: async ({
       pageParam,
     }): Promise<
@@ -82,6 +79,7 @@ export function useProductPagination({
       } & PaginationProps
     > => {
       let res;
+
       if (keyword) {
         res = await request.post<
           AxiosResponse<ProductResponse[]> & PaginationProps
@@ -91,27 +89,33 @@ export function useProductPagination({
             language_code: lang,
             keyword,
           },
-          { params: { page: pageParam?.page || 0, size } }
+          { params: { page: pageParam?.page, size } }
         );
       } else {
         res = await request.get<
           AxiosResponse<ProductResponse[]> & PaginationProps
-        >(url, { params: { page: pageParam?.page || 0, size } });
+        >(url, { params: { page: pageParam?.page, size } });
       }
 
       const { totalPages, totalElements, nextCursor } = res.data;
       const products = res.data.data;
       const result = products.map((payload) => getResponse(payload, getString));
 
-      return { result, totalPages, totalElements, nextCursor };
+      return {
+        result,
+        totalPages,
+        totalElements,
+        nextCursor,
+        page: pageParam?.page || page,
+      };
     },
-    getNextPageParam: ({ nextCursor, totalElements, totalPages }) =>
+    getNextPageParam: ({ nextCursor, totalElements, totalPages, page }) =>
       nextCursor
         ? {
-            page: page + 1,
             nextCursor,
             totalElements,
             totalPages,
+            page: page !== undefined ? page + 1 : 0,
           }
         : undefined,
   });
@@ -206,7 +210,6 @@ export function useEditProduct() {
 export function useArchivedProduct() {
   const queryClient = useQueryClient();
   const popUpMsg = usePopUpMessage();
-  const uploadImage = useUploadProductImage();
   const { setLangRequest } = useLanguage();
   return useMutation(
     async ({ id, prd_archived }: { id: string; prd_archived: number }) => {

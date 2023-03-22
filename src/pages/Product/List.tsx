@@ -28,7 +28,7 @@ import {
 import { useHistory } from "react-router";
 import Image from "components/Image";
 import { t, Trans } from "@lingui/macro";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Product } from "types/product";
 
 const ProductList: React.FC = () => {
@@ -38,6 +38,7 @@ const ProductList: React.FC = () => {
   const {
     data: products,
     refetch,
+
     fetchNextPage,
     isFetchingNextPage,
     hasNextPage,
@@ -49,6 +50,7 @@ const ProductList: React.FC = () => {
     await refetch();
     event.detail.complete();
   }
+
   return (
     <IonPage>
       <Toolbar
@@ -160,7 +162,9 @@ const ProductList: React.FC = () => {
               <IonButton
                 expand="block"
                 className="text-white ion-margin-top"
-                onClick={() => fetchNextPage()}
+                onClick={() => {
+                  fetchNextPage();
+                }}
               >
                 {isFetchingNextPage ? <>Loading</> : <Trans>Load More</Trans>}
               </IonButton>

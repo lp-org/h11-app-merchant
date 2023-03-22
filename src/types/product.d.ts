@@ -61,7 +61,8 @@ export type AddProductProps = {
 };
 
 export interface PaginationProps {
-  totalPages: number;
-  totalElements: number;
-  nextCursor: boolean;
+  totalPages?: number;
+  totalElements?: number;
+  nextCursor?: boolean;
+  page?: number;
 }
